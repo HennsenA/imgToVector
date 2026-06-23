@@ -1,6 +1,7 @@
 import os
 import zipfile
 import asyncio
+import datetime
 from typing import List, Optional
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, BackgroundTasks, status
 from fastapi.responses import JSONResponse
@@ -110,7 +111,7 @@ async def convert_images_async(
     tasks[task_id] = {
         "status": "queued",
         "progress": 0,
-        "created_at": str(pd.Timestamp.now()),
+        "created_at": str(datetime.datetime.now()),
         "result": None,
         "error": None,
     }

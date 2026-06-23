@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>imgToVector - Convierte imágenes a vectores SVG</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-purple: #8B5CF6;
+            --dark-purple: #6D28D9;
+            --light-purple: #A78BFA;
+            --black: #0F0F0F;
+            --dark-gray: #1A1A1A;
+            --medium-gray: #2D2D2D;
+            --light-gray: #6B7280;
+            --white: #FFFFFF;
+            --off-white: #F9FAFB;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--black) 0%, var(--dark-gray) 100%);
+            color: var(--white);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(15, 15, 15, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--medium-gray);
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-purple);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--white), var(--light-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--light-gray);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Main App Section */
+        .app-section {
+            background: var(--dark-gray);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            border: 1px solid var(--medium-gray);
+            box-shadow: 0 20px 60px rgba(139, 92, 246, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--white);
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed var(--primary-purple);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(139, 92, 246, 0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 2rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--light-purple);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: var(--light-gray);
+            font-size: 0.875rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        /* File List */
+        .file-list {
+            margin: 2rem 0;
+        }
+
+        .file-item {
+            background: var(--medium-gray);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+        }
+
+        .file-details h4 {
+            color: var(--white);
+            margin-bottom: 0.25rem;
+        }
+
+        .file-details p {
+            color: var(--light-gray);
+            font-size: 0.875rem;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--light-gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .remove-file:hover {
+            color: #EF4444;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .option-group {
+            background: var(--medium-gray);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .option-group h3 {
+            color: var(--primary-purple);
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .option-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--white);
+            font-weight: 500;
+        }
+
+        .option-group select,
+        .option-group input[type="range"] {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+            background: var(--dark-gray);
+            color: var(--white);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .option-group select:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+        }
+
+        .range-value {
+            text-align: center;
+            color: var(--primary-purple);
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .preset-description {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--light-gray);
+            border-left: 3px solid var(--primary-purple);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple), var(--dark-purple));
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--medium-gray);
+            color: var(--white);
+            border: 1px solid var(--light-gray);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-gray);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        /* Progress */
+        .progress-container {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            background: var(--medium-gray);
+            border-radius: 12px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-purple), var(--light-purple));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: var(--light-gray);
+        }
+
+        /* How it Works Section */
+        .how-it-works {
+            margin: 4rem 0;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .step-card {
+            background: var(--dark-gray);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--medium-gray);
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-purple);
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-purple), var(--dark-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .step-card h3 {
+            color: var(--white);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-card p {
+            color: var(--light-gray);
+            font-size: 0.95rem;
+        }
+
+        /* About Section */
+        .about-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(15, 15, 15, 0.9));
+            border-radius: 20px;
+            padding: 3rem;
+            margin: 4rem 0;
+            border: 1px solid var(--medium-gray);
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .about-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .about-section p {
+            color: var(--light-gray);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .about-section a {
+            color: var(--primary-purple);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .about-section a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--primary-purple);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--black);
+            border-top: 1px solid var(--medium-gray);
+            padding: 2rem 0;
+            text-align: center;
+            color: var(--light-gray);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .app-section {
+                padding: 2rem 1.5rem;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--white);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--dark-gray);
+            color: var(--white);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--primary-purple);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: none;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.error {
+            border-color: #EF4444;
+        }
+
+        .toast.success {
+            border-color: #10B981;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">imgToVector</div>
+                <nav class="nav-links">
+                    <a href="#app">App</a>
+                    <a href="#how-it-works">Cómo funciona</a>
+                    <a href="#about">Acerca de</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Convierte imágenes a vectores SVG</h1>
+            <p>Transforma tus imágenes rasterizadas en vectores escalables con inteligencia artificial. Rápido, gratis y de código abierto.</p>
+        </div>
+    </section>
+
+    <!-- Main App -->
+    <section id="app" class="container">
+        <div class="app-section">
+            <h2 class="section-title">🎨 Vectorizar Imágenes</h2>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Arrastra imágenes aquí o haz clic para seleccionar</div>
+                <div class="upload-hint">Soporta: PNG, JPG, JPEG, BMP, GIF, TIFF, WEBP</div>
+                <input type="file" id="fileInput" multiple accept="image/*">
+            </div>
+
+            <!-- File List -->
+            <div class="file-list" id="fileList"></div>
+
+            <!-- Options -->
+            <div class="options-grid">
+                <!-- Preset Selection -->
+                <div class="option-group">
+                    <h3>⚡ Preset Rápido</h3>
+                    <label for="preset">Selecciona un preset preconfigurado:</label>
+                    <select id="preset">
+                        <option value="color">Color - Estándar</option>
+                        <option value="black_white">Blanco y Negro</option>
+                        <option value="high_quality">Alta Calidad</option>
+                        <option value="fast">Rápido</option>
+                        <option value="ultra_quality">Ultra Calidad</option>
+                    </select>
+                    <div class="preset-description" id="presetDescription">
+                        Vectorización a color con curvas suaves. Ideal para ilustraciones y fotos.
+                    </div>
+                </div>
+
+                <!-- Advanced Options -->
+                <div class="option-group">
+                    <h3>🔧 Ajustes Avanzados</h3>
+                    <label for="colorPrecision">Precisión de Color: <span id="colorPrecisionValue">6</span></label>
+                    <input type="range" id="colorPrecision" min="1" max="8" value="6">
+                    
+                    <label for="filterSpeckle">Filtro de Ruido: <span id="filterSpeckleValue">4</span></label>
+                    <input type="range" id="filterSpeckle" min="0" max="32" value="4">
+                    
+                    <label for="maxIterations">Iteraciones Máximas: <span id="maxIterationsValue">10</span></label>
+                    <input type="range" id="maxIterations" min="0" max="20" value="10">
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">Procesando...</div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="button-group">
+                <button class="btn btn-secondary" id="analyzeBtn" onclick="analyzeImages()">
+                    📊 Analizar Imágenes
+                </button>
+                <button class="btn btn-primary" id="convertBtn" onclick="convertImages()">
+                    🚀 Vectorizar Ahora
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section id="how-it-works" class="container how-it-works">
+        <h2 class="section-title" style="text-align: center;">¿Cómo funciona?</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Sube tu imagen</h3>
+                <p>Arrastra o selecciona una o más imágenes. Soportamos los formatos más populares.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Configura</h3>
+                <p>Elige un preset o ajusta los parámetros avanzados según tus necesidades.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Vectoriza</h3>
+                <p>El sistema convierte tu imagen a vector en cuestion de segundos o minutos.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">4</div>
+                <h3>Descarga</h3>
+                <p>Obtén tu archivo SVG listo para usar en cualquier proyecto.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="container">
+        <div class="about-section">
+            <div class="about-content">
+                <h2>Acerca de imgToVector</h2>
+                <p>
+                    <span class="badge">🤖 Hecho con IA</span>
+                    <span class="badge">🆓 Sin fines de lucro</span>
+                    <span class="badge">🔓 Código Abierto</span>
+                </p>
+                <p>
+                    Esta aplicación fue desarrollada con la ayuda de inteligencia artificial para democratizar 
+                    el acceso a herramientas de vectorización. Creo en el software libre 
+                    y en hacer que las herramientas profesionales estén al alcance de todos.
+                </p>
+                <p>
+                    Es completamente gratuita, sin anuncios ni limitaciones ocultas. Si te es útil, 
+                    considera contribuir al proyecto o compartirlo con otros.
+                </p>
+                <p style="margin-top: 2rem;">
+                    <strong>📦 Código fuente disponible en GitHub:</strong><br>
+                    <a href="https://github.com/HennsenA/imgToVector" target="_blank">
+                        github.com/HennsenA/imgToVector
+                    </a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 imgToVector - Hecho con ❤️ y mucho café</p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        let selectedFiles = [];
+        let presetDescriptions = {
+            'color': 'Vectorización a color con curvas suaves. Ideal para ilustraciones y fotos.',
+            'black_white': 'Vectorización monocromática. Ideal para logos y siluetas.',
+            'high_quality': 'Máxima fidelidad. Más lento pero con mejor detalle.',
+            'fast': 'Vectorización veloz con menor detalle. Útil para previsualizaciones.',
+            'ultra_quality': 'Máxima precisión posible. Ideal para imágenes complejas con muchos detalles.'
+        };
+
+        // Preset configurations (for reference)
+        const presetConfigs = {
+            'color': { colorPrecision: 6, filterSpeckle: 4, maxIterations: 10 },
+            'black_white': { colorPrecision: 6, filterSpeckle: 4, maxIterations: 10 },
+            'high_quality': { colorPrecision: 7, filterSpeckle: 2, maxIterations: 15 },
+            'fast': { colorPrecision: 4, filterSpeckle: 8, maxIterations: 5 },
+            'ultra_quality': { colorPrecision: 8, filterSpeckle: 0, maxIterations: 20 }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupUploadArea();
+            setupPresetChange();
+            setupRangeInputs();
+        });
+
+        // Upload Area Setup
+        function setupUploadArea() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        // Handle Files
+        function handleFiles(files) {
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/bmp', 'image/gif', 'image/tiff', 'image/webp'];
+            
+            Array.from(files).forEach(file => {
+                if (validTypes.includes(file.type)) {
+                    selectedFiles.push(file);
+                } else {
+                    showToast(`Formato no soportado: ${file.name}`, 'error');
+                }
+            });
+            
+            updateFileList();
+        }
+
+        // Update File List
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-icon">🖼️</div>
+                        <div class="file-details">
+                            <h4>${file.name}</h4>
+                            <p>${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                    </div>
+                    <button class="remove-file" onclick="removeFile(${index})">×</button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // Remove File
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+        }
+
+        // Preset Change
+        function setupPresetChange() {
+            const presetSelect = document.getElementById('preset');
+            presetSelect.addEventListener('change', (e) => {
+                const preset = e.target.value;
+                document.getElementById('presetDescription').textContent = presetDescriptions[preset];
+                
+                // Update advanced options based on preset
+                const config = presetConfigs[preset];
+                if (config) {
+                    document.getElementById('colorPrecision').value = config.colorPrecision;
+                    document.getElementById('filterSpeckle').value = config.filterSpeckle;
+                    document.getElementById('maxIterations').value = config.maxIterations;
+                    updateRangeValues();
+                }
+            });
+        }
+
+        // Range Inputs
+        function setupRangeInputs() {
+            const ranges = ['colorPrecision', 'filterSpeckle', 'maxIterations'];
+            ranges.forEach(id => {
+                document.getElementById(id).addEventListener('input', updateRangeValues);
+            });
+        }
+
+        function updateRangeValues() {
+            document.getElementById('colorPrecisionValue').textContent = document.getElementById('colorPrecision').value;
+            document.getElementById('filterSpeckleValue').textContent = document.getElementById('filterSpeckle').value;
+            document.getElementById('maxIterationsValue').textContent = document.getElementById('maxIterations').value;
+        }
+
+        // Analyze Images
+        async function analyzeImages() {
+            if (selectedFiles.length === 0) {
+                showToast('Por favor selecciona al menos una imagen', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFiles[0]);
+
+            try {
+                const response = await fetch(`${API_BASE}/image-info/`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const info = await response.json();
+                    showToast(`Imagen: ${info.width}x${info.height}px | ${info.megapixels}MP | Recomendado: ${info.recommended_preset}`, 'success');
+                    
+                    // Auto-select recommended preset
+                    document.getElementById('preset').value = info.recommended_preset;
+                    document.getElementById('preset').dispatchEvent(new Event('change'));
+                } else {
+                    showToast('Error al analizar la imagen', 'error');
+                }
+            } catch (error) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+
+        // Convert Images
+        async function convertImages() {
+            if (selectedFiles.length === 0) {
+                showToast('Por favor selecciona al menos una imagen', 'error');
+                return;
+            }
+
+            const convertBtn = document.getElementById('convertBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<span class="spinner"></span> Procesando...';
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Iniciando...';
+
+            const formData = new FormData();
+            selectedFiles.forEach(file => {
+                formData.append('files', file);
+            });
+            formData.append('preset', document.getElementById('preset').value);
+            formData.append('color_precision', document.getElementById('colorPrecision').value);
+            formData.append('filter_speckle', document.getElementById('filterSpeckle').value);
+            formData.append('max_iterations', document.getElementById('maxIterations').value);
+
+            try {
+                // Simulate progress
+                const progressInterval = setInterval(() => {
+                    const currentWidth = parseInt(progressFill.style.width) || 0;
+                    if (currentWidth < 90) {
+                        progressFill.style.width = (currentWidth + 10) + '%';
+                        progressText.textContent = `Procesando... ${currentWidth + 10}%`;
+                    }
+                }, 500);
+
+                const response = await fetch(`${API_BASE}/convert/`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = '¡Completado!';
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Get filename from headers or default
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = selectedFiles.length === 1 ? 
+                        selectedFiles[0].name.replace(/\.[^/.]+$/, '') + '.svg' : 
+                        'vectorized_images.zip';
+                    
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (filenameMatch) filename = filenameMatch[1];
+                    }
+                    
+                    a.download = filename;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                    showToast('¡Vectorización completada!', 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Error en la vectorización', 'error');
+                }
+            } catch (error) {
+                showToast('Error de conexión: ' + error.message, 'error');
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.innerHTML = '🚀 Vectorizar Ahora';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // Toast Notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
